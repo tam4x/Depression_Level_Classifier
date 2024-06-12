@@ -10,3 +10,11 @@
 - search for possible neural networks that can be finetuned
 - use pretrained- CNN or Neural Networks in general to extract features from actigraphy data?
 - combine these features with the features given in the ALL Dataframe
+
+## Explanation
+- Survey 1 Datapoint per Participant
+- Create new column with group_pack
+- New Patients have to be in the same group_pack and PAM[ID1] - PAM[ID2] -> new actigraphy data n^2 -n participants (75000 roughly)
+- use the new actigraphy data to extract features from and add these features to the synthetic participant dataframe
+- Use abs(PHQ9P2 - PHQ9P1) > threshhold as a classification for depression or the (mh_PHQ_SP2 + mh_PHQ_SP1) / 2 as a classification
+- append 2014 and 2016 together

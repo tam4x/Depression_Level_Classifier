@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import random
 
-def process_data(data: pd.DataFrame) -> pd.Dataframe:
+def process_data(data: pd.DataFrame) -> pd.DataFrame:
     # Drop rows with missing target values
     
     for column in data.columns:
@@ -23,6 +23,9 @@ def process_data(data: pd.DataFrame) -> pd.Dataframe:
 
         elif column == 'year':
             data[column] = data[column].fillna(int(data[column].mean()))
+
+        elif column in ['id','mod_d', 'ID']:
+            pass
 
         else:
             data[column] = data[column].fillna(data[column].mean())
@@ -91,6 +94,11 @@ def Age_range(value):
         return "[54-58]"
     elif 59 <= value <= 65:
         return "[59-65]"
-    elif np.isnan(value):
+    elif np.isnan(value) == None:
         return "[34-38]"
+    elif value > 65:
+        return "[59-65]"
+    elif value < 19:
+        return "[19-23]"
+
     
