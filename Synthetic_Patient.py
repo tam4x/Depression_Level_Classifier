@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
 import operator
+import pywt
 
 operator_map = {
     '+': operator.add,
@@ -160,6 +161,14 @@ class Synthetic_Patient_Dataset:
         # Apply the oversampling function to each group
         self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: oversample(x, mean_count)).reset_index(drop=True)
     
+    def compute_features(self):
+        coefficents = np.zeros(len(self.id_pairs_df))
+        for index, participant in self.id_pairs_df.itterows():
+            coeff = pywt.wavedec(participant['ACTIGRAPHY_DATA'], 'db1')
+            print(len(coeff))
+            coefficents[index] = coeff
+        self.id_pairs_df['Features'] = coefficents
+
 Dataset = Synthetic_Patient_Dataset(threshold = 8, actigraphy_data_operator = '+', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 50)
 
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
