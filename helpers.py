@@ -9,12 +9,10 @@ def process_data(data: pd.DataFrame) -> pd.DataFrame:
         if column == 'sex':
             # Count the number of NaN values
             nan_count = data[column].isna().sum()
-            print(f"Number of NaN values: {nan_count}")
 
             # Create a list of random values (1 or 2) with the same length as the number of NaN values
             random_values = [random.choice([1, 2]) for _ in range(nan_count)]
-            print(f"Random values to replace NaNs: {random_values}")
-
+           
             # Create an iterator from the random values list
             random_values_iter = iter(random_values)
 
@@ -100,5 +98,28 @@ def Age_range(value):
         return "[59-65]"
     elif value < 19:
         return "[19-23]"
+    
+
+def print_information(df):
+    df_grouped = df.groupby('d_PHQ')
+    for name, group in df_grouped:
+        print(name)
+        print(group.count())
+    print('---Number of Non-Depression and Depression---')
+    print(df.groupby('Depression').count()['ID_1'].iloc[0], df.groupby('Depression').count()['ID_1'].iloc[1])
+
+def oversample(group, target_count):
+    if len(group) < target_count:
+        # Calculate how many samples we need
+        samples_needed = target_count - len(group)
+        # Randomly sample with replacement
+        additional_samples = group.sample(samples_needed, replace=True)
+        # Concatenate the original group with the additional samples
+        return pd.concat([group, additional_samples])
+    else:
+        return group
+    
+
+
 
     
