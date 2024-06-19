@@ -161,14 +161,25 @@ class Synthetic_Patient_Dataset:
         # Apply the oversampling function to each group
         self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: oversample(x, mean_count)).reset_index(drop=True)
     
-    def compute_features(self):
-        coefficents = np.zeros(len(self.id_pairs_df))
+    def compute_features(self, energy_threshold: float):
+        self.coefficents = np.zeros(len(self.id_pairs_df))
         for index, participant in self.id_pairs_df.itterows():
             coeff = pywt.wavedec(participant['ACTIGRAPHY_DATA'], 'db1')
             print(len(coeff))
-            coefficents[index] = coeff
-        self.id_pairs_df['Features'] = coefficents
+            self.coefficents[index] = coeff
+        
+        for i,participant in enumerate(self.coefficents):
+            energies = np.square(participant)
+            sorted_indices = np.argsort(energies)[::-1]
+            cumulative_energy = np.cumsum(energies[sorted_indices])
+            total_energy = cumulative_energy[-1]
+            cumulative_energy /= total_energy
 
+            num_features = np.searchsorted(cumulative_energy, energy_threshold)
+            
+            important_indices = sorted_indices[:num_features]
+            self.coefficents[i] = participant[important_indices]
+    
 Dataset = Synthetic_Patient_Dataset(threshold = 8, actigraphy_data_operator = '+', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 50)
 
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
