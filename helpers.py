@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 import random
+import pywt
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+# Define functions to compute statistical features
 
 def process_data(data: pd.DataFrame) -> pd.DataFrame:
     # Drop rows with missing target values
@@ -119,6 +123,42 @@ def oversample(group, target_count):
     else:
         return group
     
+
+
+
+def compute_energy(coeff):
+    return np.sum(coeff ** 2)
+
+def compute_mean(coeff):
+    return np.mean(coeff)
+
+def compute_std(coeff):
+    return np.std(coeff)
+
+def compute_entropy(coeff):
+    p = np.abs(coeff) / np.sum(np.abs(coeff))
+    return -np.sum(p * np.log2(p + np.finfo(float).eps))  # eps to avoid log(0)
+
+def compute_features(data):
+    coeffs = pywt.wavedec(data, 'db1')
+    features = []
+    for i, coeff in enumerate(coeffs):
+        features.append(compute_energy(coeff))
+        features.append(compute_mean(coeff))
+        features.append(compute_std(coeff))
+        features.append(compute_entropy(coeff))
+
+    # Convert the feature list to a numpy array
+    features = np.array(features)
+
+    # (Optional) Normalize or standardize the features
+    scaler = StandardScaler()
+    features = scaler.fit_transform(features.reshape(-1, 1)).flatten()
+
+    # print("Extracted features:")
+    #print(features)
+
+    return features
 
 
 

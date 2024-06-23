@@ -1,2 +1,7 @@
-*/
+/ALL
+/data
+/HWP
+/PAM
+/__pycache__
+/.ipynp_checkpoints
 .log

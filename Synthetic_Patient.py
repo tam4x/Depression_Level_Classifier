@@ -129,7 +129,8 @@ class Synthetic_Patient_Dataset:
 
             op_func = operator_map[self.operator]
             result = op_func(data_participant_1, data_participant_2)
-            synthetic_array[number] = result / 2
+            
+            synthetic_array[number] = np.abs(result/2)
 
             id_combined.append(synthetic_patient['ID_1'] + synthetic_patient['ID_2'])
             logging.info(f"Participant_1 {synthetic_patient['ID_1']} and Participant_2 {synthetic_patient['ID_2']} added with {synthetic_array[number]}")
@@ -161,33 +162,29 @@ class Synthetic_Patient_Dataset:
         # Apply the oversampling function to each group
         self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: oversample(x, mean_count)).reset_index(drop=True)
     
-    def compute_features(self, energy_threshold: float):
-        self.coefficents = np.zeros(len(self.id_pairs_df))
-        for index, participant in self.id_pairs_df.itterows():
-            coeff = pywt.wavedec(participant['ACTIGRAPHY_DATA'], 'db1')
-            print(len(coeff))
-            self.coefficents[index] = coeff
-        
-        for i,participant in enumerate(self.coefficents):
-            energies = np.square(participant)
-            sorted_indices = np.argsort(energies)[::-1]
-            cumulative_energy = np.cumsum(energies[sorted_indices])
-            total_energy = cumulative_energy[-1]
-            cumulative_energy /= total_energy
+    def compute_features(self):
+        feature_list = []
+        for index,participant in self.id_pairs_df.iterrows():
+            features = compute_features(participant['ACTIGRAPHY_DATA'])
+            feature_list.append(features)
 
-            num_features = np.searchsorted(cumulative_energy, energy_threshold)
-            
-            important_indices = sorted_indices[:num_features]
-            self.coefficents[i] = participant[important_indices]
-    
-Dataset = Synthetic_Patient_Dataset(threshold = 8, actigraphy_data_operator = '+', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 50)
+        feature_list = np.array(feature_list, dtype=np.float32)
 
+        for i in range(feature_list.shape[1]):
+            self.id_pairs_df[f'FEATURE_{i}'] = feature_list[:, i]
+       
+    def remove_actigraphy(self):
+        self.id_pairs_df.drop('ACTIGRAPHY_DATA', axis=1, inplace=True)
+
+Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
 Dataset.remove_features()
 Dataset.create_intervalls()
 Dataset.process_data()
 Dataset.create_Synthetic_Dataset()
 Dataset.calculate_actigraphy()
+Dataset.compute_features()
+Dataset.remove_actigraphy()
 Dataset.dataset_oversample()
 Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
 

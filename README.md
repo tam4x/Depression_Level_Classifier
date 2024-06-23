@@ -1,32 +1,44 @@
 # Depression Classifier
 
 ## TODO
-- Visualize Data to get correlations between features
-- Oversample Groups that are not well represented
-- Create a Neural Network
-- what are the possible features of the input vector?
-- search for possible neural networks that can be finetuned
-- use pretrained- CNN or Neural Networks in general to extract features from actigraphy data?
-- combine these features with the features given in the ALL Dataframe
+- Visualize Data to get correlations between features (Important)
+- Oversample or Undersample Groups that are not well represented (maybe use undersampling, when threshold is really high. (BIAS))
+- Use evaluation metrics (Confusion Matrix, ROC, F1 Score etc.)
 
 ## Explanation
 - Survey 1 Datapoint per Participant
 - New Patients have to be in the same group_pack and PAM[ID1] - PAM[ID2] -> new actigraphy data n^2 -n participants (75000 roughly)
 - use the new actigraphy data to extract features from and add these features to the synthetic participant dataframe
-- Use abs(PHQ9P2 - PHQ9P1) > threshhold as a classification for depression or the (mh_PHQ_SP2 + mh_PHQ_SP1) / 2 as a classification
+- Use abs(PHQ9P2 - PHQ9P1) > threshold as a classification for depression or the abs(mh_PHQ_SP2 - mh_PHQ_SP1) > threshold as a classification
 
 
 ## Project Structure
 - Folders
-    - ALL
-    - HWP
-    - PAM
-    - data
+    - ALL (Here are the ALL-Files) -> needs to be created
+    - HWP (Here is the weird data) -> needs to be created
+    - PAM (Here is the actigraphy data or PAM data) -> needs to be created
+    - data (here are the processed datasets located) -> needs to be created
+    - Pier (Threshold (10 and 3))
+        - FNN
+        - CNN oder Logistic Regression (Adaboost?)
+    - Luisa (Threshold (12 and 4))
+        - DT
+        - RF
+    - Ben (Threshold (14 and 5))
+        - SVM
+        - Elastic Net
+    - Benedikt (Threshold (16 and 6))
+        - Gradient_Boosting
+        - XGBoost
+    - Mo (Threshold (8 and 2))
+        - Adaboost ?
+        - Lasso
+        - Ridge
+        - Logistic Regression ?
 - Data_processing (Only for Scripting functionality is in Synthetic_Patient)
 - helpers (Some helpers Functions)
-- NN (File for Neural Network)
 - Synthetic_Patient (File to create the processed Dataframe with parameters)
-    - Threshold (Better to use one under 15 because then there are to many Non-Depression Patients in Dataset)
-    - actigraphy_data_operator (+, -, *, /)
-    - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9 etc.)
-    - percent_of_dataset (10,20,30,..,100)
+    - Threshold (For MH_PHQ_S = [8,10,12,14,16] and for BP_PHQ_9 = [2,3,4,5,6])
+    - actigraphy_data_operator (+, -)
+    - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
+    - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^
