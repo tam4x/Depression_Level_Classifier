@@ -18,6 +18,11 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
+import itertools
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from NN import *
+from sklearn.metrics import confusion_matrix
 
 # Convert DataFrame to PyTorch tensors
 def df_to_tensor(df, features_column, target_col):
@@ -203,9 +208,107 @@ def evaluate_model(model, dataloader, criterion, device):
         print(f'Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%')
         return avg_loss, accuracy
 
+
+
+def cross_validation(train_dataloader, validation_dataloader, test_dataloader, criterion, optimizer, num_epochs, device):
+    input_size = 56
+    hidden_size = 128
+    num_epochs = 30
+    learning_rate_values = [0.001,0.003,0.006,0.01]
+    momentum_values = [0.9, 0.95,0.99]
+    results = {}
+    #criterion = nn.BCEWithLogitsLoss()  # Combines sigmoid and binary cross-entropy loss
+    criterion = nn.BCELoss()
+    optimizers = ['Adam', 'SGD']
+    for i in range(3):
+        for optimizer in optimizers:
+            if optimizer == 'Adam':
+                for learning_rate in learning_rate_values:
+                    if i == 0:
+                        m = Depression_Classifier_v_0(input_size, hidden_size).to(device)
+                    elif i == 1:
+                        m = Depression_Classifier_v_1(input_size, hidden_size).to(device)
+                    else:
+                        m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
+
+                    o = optim.Adam(m.parameters(), lr=learning_rate)
+
+                    train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
+
+                    validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
+
+                    # Store results
+                    results[(f'Model_{i}', optimizer, learning_rate)] = {
+                        'validation_loss': validation_loss,
+                        'accuracy': accuracy
+                    }
+            else:
+                for momentum, learning_rate in itertools.product(momentum_values, learning_rate_values):
+                    if i == 0:
+                        m = Depression_Classifier_v_0(input_size, hidden_size).to(device)
+                    elif i == 1:
+                        m = Depression_Classifier_v_1(input_size, hidden_size).to(device)
+                    else:
+                        m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
+                        
+                    o = optim.SGD(m.parameters(), lr=learning_rate, momentum=momentum)
+
+                    train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
+
+                    validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
+
+                    # Store results
+                    results[(f'Model_{i}', optimizer, learning_rate,momentum)] = {
+                        'validation_loss': validation_loss,
+                        'accuracy': accuracy
+                    }
+        
+        return results
     
 
+def evaluate(model, device, depression_feature):
 
+    if depression_feature == 'BP_PHQ_9':
+        df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100.csv')
+    elif depression_feature == 'MH_PHQ_S':
+        df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100.csv')
+
+    _, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    test_features, test_targets = df_to_tensor(test_df, features_column='FEATURES', target_col='Depression')
+
+    test_dataset = CustomDataset(test_features, test_targets)
+    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+    # Test the model
+    true_labels = []
+    all_predicted = []
+
+    for features, targets in test_dataloader:
+        features = features.to(device)
+        targets = targets.to(device)
+
+        outputs = model(features)
+        #outputs = model_mh_phq_s(features)
+        predicted = torch.round(outputs).int().squeeze().tolist()
+
+        true_labels.append(targets.int().squeeze().tolist())
+        all_predicted.append(predicted)
+
+    true_labels_all = [item for sublist in true_labels for item in sublist]
+    predicted_labels_all = [item for sublist in all_predicted for item in sublist]
+    # Generate confusion matrix
+    cm = confusion_matrix(true_labels_all, predicted_labels_all)
+    
+    # Plot confusion matrix
+    plt.figure(figsize=(9, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.title('Confusion Matrix')
+    plt.show()
+    TN, FP, FN, TP = cm.ravel()
+
+    return true_labels_all, predicted_labels_all, TN, FP, FN, TP
 
 
 
