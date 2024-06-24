@@ -156,11 +156,14 @@ class Synthetic_Patient_Dataset:
         self.id_pairs_df.to_csv(path, index=False)
 
     def dataset_oversample(self):
-         # Define a function to oversample each group to the target count
-        mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/2) 
-
-        # Apply the oversampling function to each group
-        self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: oversample(x, mean_count)).reset_index(drop=True)
+        if self.depression_feature == 'BP_PHQ_9':
+            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/10) 
+            # Apply the oversampling function to each group
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling(x, mean_count, self.depression_feature)).reset_index(drop=True)
+        elif self.depression_feature == 'MH_PHQ_S':
+            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/2) 
+            # Apply the oversampling function to each group
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling(x, mean_count, self.depression_feature)).reset_index(drop=True)
     
     def compute_features(self):
         feature_list = []
@@ -176,7 +179,7 @@ class Synthetic_Patient_Dataset:
     def remove_actigraphy(self):
         self.id_pairs_df.drop('ACTIGRAPHY_DATA', axis=1, inplace=True)
 
-Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
+Dataset = Synthetic_Patient_Dataset(threshold = 3, actigraphy_data_operator = '-', depression_classifier_feature = 'BP_PHQ_9', percent_of_dataset = 100)
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
 Dataset.remove_features()
 Dataset.create_intervalls()
@@ -185,7 +188,9 @@ Dataset.create_Synthetic_Dataset()
 Dataset.calculate_actigraphy()
 Dataset.compute_features()
 Dataset.remove_actigraphy()
-Dataset.dataset_oversample()
+#Dataset.dataset_oversample()
+print_information(Dataset.id_pairs_df)
+
 Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
 
 

@@ -19,18 +19,20 @@
     - PAM (Here is the actigraphy data or PAM data) -> needs to be created
     - data (here are the processed datasets located) -> needs to be created
     - Pier (Threshold (10 and 3))
-        - FNN
+        - when using 10 as a threshold after sampling 72 % of the dataset are not depressed (38958 / (38958+14700))
+        - when using 3 as a threshold after sampling 88 % of the dataset are not depressed (13346 / (13346 + 1802))
+        - FNN 
         - CNN oder Logistic Regression (Adaboost?)
-    - Luisa (Threshold (12 and 4))
+    - Luisa (Threshold (12 and 2))
         - DT
         - RF
-    - Ben (Threshold (14 and 5))
+    - Ben (Threshold (14 and 6))
         - SVM
         - Elastic Net
-    - Benedikt (Threshold (16 and 6))
+    - Benedikt (Threshold (16 and 8))
         - Gradient_Boosting
         - XGBoost
-    - Mo (Threshold (8 and 2))
+    - Mo (Threshold (8 and 1))
         - Adaboost ?
         - Lasso
         - Ridge
@@ -38,7 +40,7 @@
 - Data_processing (Only for Scripting functionality is in Synthetic_Patient)
 - helpers (Some helpers Functions)
 - Synthetic_Patient (File to create the processed Dataframe with parameters)
-    - Threshold (For MH_PHQ_S = [8,10,12,14,16] and for BP_PHQ_9 = [2,3,4,5,6])
+    - Threshold (For MH_PHQ_S = [8,10,12,14,16] and for BP_PHQ_9 = [1,2,3,6,8])
     - actigraphy_data_operator (+, -)
     - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
     - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^

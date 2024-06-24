@@ -112,18 +112,38 @@ def print_information(df):
     print('---Number of Non-Depression and Depression---')
     print(df.groupby('Depression').count()['ID_1'].iloc[0], df.groupby('Depression').count()['ID_1'].iloc[1])
 
-def oversample(group, target_count):
-    if len(group) < target_count:
-        # Calculate how many samples we need
-        samples_needed = target_count - len(group)
-        # Randomly sample with replacement
-        additional_samples = group.sample(samples_needed, replace=True)
-        # Concatenate the original group with the additional samples
-        return pd.concat([group, additional_samples])
-    else:
-        return group
-    
+def sampling(group, target_count, depression_feature):
+    if depression_feature == 'BP_PHQ_9':
+        if len(group) < target_count:
+            # Calculate how many samples we need
+            samples_needed = int((target_count - len(group)) / 4)
+            # Randomly sample with replacement
+            additional_samples = group.sample(samples_needed, replace=True)
+            # Concatenate the original group with the additional samples
+            balanced_group = pd.concat([group, additional_samples])
+        elif len(group) > 10*target_count:
+            # Undersampling: Randomly sample without replacement
+            balanced_group = group.sample(10*target_count, replace=False)
+        else:
+            # Return the original group
+            balanced_group = group
 
+    elif depression_feature == 'MH_PHQ_S':
+        if len(group) < target_count:
+            # Calculate how many samples we need
+            samples_needed = int((target_count - len(group)) / 2)
+            # Randomly sample with replacement
+            additional_samples = group.sample(samples_needed, replace=True)
+            # Concatenate the original group with the additional samples
+            balanced_group = pd.concat([group, additional_samples])
+        elif len(group) > 4*target_count:
+            # Undersampling: Randomly sample without replacement
+            balanced_group = group.sample(4*target_count, replace=False)
+        else:
+            # Return the original group
+            balanced_group = group
+
+    return balanced_group
 
 
 def compute_energy(coeff):
