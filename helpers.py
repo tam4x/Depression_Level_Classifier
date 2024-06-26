@@ -4,6 +4,8 @@ import random
 import pywt
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
 # Define functions to compute statistical features
 
 def process_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -199,9 +201,28 @@ def compute_metrics(TN, FP, FN, TP):
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
     f1 = 2 * (precision * recall) / (precision + recall)
-    return accuracy, precision, recall, f1
+    FNR = FN / (FN + TP)
+    return accuracy, precision, recall, f1, FNR
     
 
+def create_roc(fpr, tpr, model_names):
+    plt.figure(figsize=(8, 6))
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')  # Diagonal line
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate (FPR)')
+    plt.ylabel('True Positive Rate (TPR)')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    plt.grid(True)
+    colors = ['red', 'green', 'purple', 'orange', 'black', 'pink', 'brown', 'gray']
+
+    for i,model in enumerate(model_names):
+        plt.plot(fpr[i], tpr[i], color = colors[i], label=model)
+    # Plot ROC curve
+    plt.legend(loc="lower right")
+    plt.grid(True)
+    plt.savefig(f'ROC/ROC_All_Models.png')
 
 
     

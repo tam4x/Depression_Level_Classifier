@@ -176,7 +176,7 @@ def train_model_cross_validation(model, train_dataloader, validation_dataloader,
             val_loss /= len(validation_dataloader)
             
             # Print epoch statistics
-            print(f'Epoch [{epoch + 1}/{num_epochs}], Training Loss: {running_loss / len(train_dataloader):.4f}, Validation Loss: {val_loss:.4f}')
+            #print(f'Epoch [{epoch + 1}/{num_epochs}], Training Loss: {running_loss / len(train_dataloader):.4f}, Validation Loss: {val_loss:.4f}')
             
             # Early stopping logic
             if val_loss < best_val_loss - min_delta:
@@ -210,7 +210,7 @@ def evaluate_model(model, dataloader, criterion, device):
 
 
 
-def cross_validation(train_dataloader, validation_dataloader, test_dataloader, criterion, optimizer, num_epochs, device):
+def cross_validation(train_dataloader, validation_dataloader, test_dataloader, criterion, num_epochs, device):
     input_size = 56
     hidden_size = 128
     num_epochs = 30
@@ -218,8 +218,8 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
     momentum_values = [0.9, 0.95,0.99]
     results = {}
     #criterion = nn.BCEWithLogitsLoss()  # Combines sigmoid and binary cross-entropy loss
-    criterion = nn.BCELoss()
     optimizers = ['Adam', 'SGD']
+    number = 1
     for i in range(3):
         for optimizer in optimizers:
             if optimizer == 'Adam':
@@ -232,7 +232,7 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
 
                     o = optim.Adam(m.parameters(), lr=learning_rate)
-
+                    
                     train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
 
                     validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
@@ -242,6 +242,8 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         'validation_loss': validation_loss,
                         'accuracy': accuracy
                     }
+                    print(f'Model: {number} is being trained with optimizer: {optimizer} and learning rate: {learning_rate} and Model_{i}')
+                    number += 1
             else:
                 for momentum, learning_rate in itertools.product(momentum_values, learning_rate_values):
                     if i == 0:
@@ -252,7 +254,6 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
                         
                     o = optim.SGD(m.parameters(), lr=learning_rate, momentum=momentum)
-
                     train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
 
                     validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
@@ -262,18 +263,26 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         'validation_loss': validation_loss,
                         'accuracy': accuracy
                     }
+                    print(f'Model: {number} is being trained with optimizer: {optimizer} and learning rate: {learning_rate} and Model_{i}')
+                    number += 1
         
-        return results
+    return results
     
 
-def evaluate(model, device, depression_feature):
+def evaluate(model, device, depression_feature, sample_version=1):
 
     if depression_feature == 'BP_PHQ_9':
-        df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100.csv')
+        if sample_version == 1:
+            df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100.csv')
+        else:
+            df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100_v2.csv')
     elif depression_feature == 'MH_PHQ_S':
-        df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100.csv')
+        if sample_version == 1:
+            df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100.csv')
+        else:
+            df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100_v2.csv')
 
-    _, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    _, test_df = train_test_split(df, test_size=0.2, random_state=41)
     test_features, test_targets = df_to_tensor(test_df, features_column='FEATURES', target_col='Depression')
 
     test_dataset = CustomDataset(test_features, test_targets)
@@ -282,12 +291,13 @@ def evaluate(model, device, depression_feature):
     # Test the model
     true_labels = []
     all_predicted = []
-
+    predicted_probabilities = []
     for features, targets in test_dataloader:
         features = features.to(device)
         targets = targets.to(device)
 
         outputs = model(features)
+        predicted_probabilities.append(outputs.squeeze().tolist())
         #outputs = model_mh_phq_s(features)
         predicted = torch.round(outputs).int().squeeze().tolist()
 
@@ -296,6 +306,7 @@ def evaluate(model, device, depression_feature):
 
     true_labels_all = [item for sublist in true_labels for item in sublist]
     predicted_labels_all = [item for sublist in all_predicted for item in sublist]
+    predicted_probabilities_all = [item for sublist in predicted_probabilities for item in sublist]
     # Generate confusion matrix
     cm = confusion_matrix(true_labels_all, predicted_labels_all)
     
@@ -305,10 +316,10 @@ def evaluate(model, device, depression_feature):
     plt.xlabel('Predicted Labels')
     plt.ylabel('True Labels')
     plt.title('Confusion Matrix')
-    plt.show()
+    plt.savefig(f'Confusion_Matrix/Confusion_Matrix__MLP_{depression_feature}_v{sample_version}.png')
     TN, FP, FN, TP = cm.ravel()
 
-    return true_labels_all, predicted_labels_all, TN, FP, FN, TP
+    return true_labels_all, predicted_labels_all, predicted_probabilities_all, TN, FP, FN, TP
 
 
 

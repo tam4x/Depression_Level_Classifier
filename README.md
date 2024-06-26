@@ -19,14 +19,13 @@
     - PAM (Here is the actigraphy data or PAM data) -> needs to be created
     - data (here are the processed datasets located) -> needs to be created
     - Pier (Threshold (10 and 3))
+        - Datasets
+            - when using 10 as a threshold after sampling with method_1 72 % of the dataset are not depressed (38958 / (38958+14700))
+            - when using 3 as a threshold after sampling with method_1 88 % of the dataset are not depressed (13346 / (13346 + 1802))
+            - when using 10 as a threshold after sampling with method_1 35 % of the dataset are not depressed (13450 / (13450+24210))
+            - when using 3 as a threshold after sampling with method_2 42 % of the dataset are not depressed (3228 / (3228 + 4304))
         - FNN
-            - when using 10 as a threshold after sampling 72 % of the dataset are not depressed (38958 / (38958+14700))
-            - when using 3 as a threshold after sampling 88 % of the dataset are not depressed (13346 / (13346 + 1802))
-        - Adaboost
-            - using a different sample method, because not as much data is needed
-            - when usign MH_PHQ_s there are 72 % non depressiv (before sampling)
-            - when using BP_PHQ_9 with old dataset 88 % are non depressiv (before sampling)
-            
+        - Adaboost         
     - Luisa (Threshold (12 and 2))
         - DT
         - RF
