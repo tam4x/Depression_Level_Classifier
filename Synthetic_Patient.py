@@ -104,7 +104,7 @@ class Synthetic_Patient_Dataset:
                         PHQSP1 = self.all_combined.loc[self.all_combined['ID'] == id_1, self.depression_feature].iloc[0]
                         PHQSP2 = self.all_combined.loc[self.all_combined['ID'] == id_2, self.depression_feature].iloc[0]
                         
-                        value = int(PHQSP1 - PHQSP2)
+                        value = abs(int(PHQSP1 - PHQSP2))
                         PHQ_value = np.append(PHQ_value, value)
             
         self.id_pairs_df = pd.DataFrame(id_pairs, columns=['ID_1', 'ID_2'])
@@ -114,7 +114,7 @@ class Synthetic_Patient_Dataset:
         self.id_pairs_df['HE_BMI'] = bmi_names
         self.id_pairs_df['ID_COMBINED'] = self.id_pairs_df['ID_1'] + self.id_pairs_df['ID_2']
         self.id_pairs_df['d_PHQ'] = PHQ_value
-        self.id_pairs_df['Depression'] = (abs(self.id_pairs_df['d_PHQ']) >= self.threshold).astype(int)
+        self.id_pairs_df['Depression'] = (self.id_pairs_df['d_PHQ'] >= self.threshold).astype(int)
 
     def calculate_actigraphy(self):
         print('Calculating Actigraphy Data from Synthetic Patients')
@@ -179,6 +179,44 @@ class Synthetic_Patient_Dataset:
     def remove_actigraphy(self):
         self.id_pairs_df.drop('ACTIGRAPHY_DATA', axis=1, inplace=True)
 
+    def particicipant_distribution(self, before_sampling = True, sampler: int = 1):
+        grouped = self.id_pairs_df.groupby('d_PHQ')
+        grouped_counts = []
+        grouped_names = []
+        for name, group in grouped:
+            grouped_counts.append(group.shape[0])
+            grouped_names.append(name)
+        # Plotting the counts
+        plt.figure(figsize=(10, 6))
+        plt.bar(grouped_names, grouped_counts, color='skyblue')
+
+        # Adding titles and labels
+        plt.title('Counts per Group for d_phq')
+        plt.xlabel('Participant Group')
+        plt.ylabel('Count')
+
+        if before_sampling:
+            plt.savefig(f'data/Participant_Distribution_before_sampling_{self.depression_feature}_{sampler}.png')
+        else:
+            plt.savefig(f'data/Participant_Distribution_after_sampling_{self.depression_feature}_{sampler}.png')
+        # Show the plot
+        plt.show()
+        
+    def dataset_oversample_v2(self):
+        if self.depression_feature == 'BP_PHQ_9':
+            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/10) 
+            # Apply the oversampling function to each group
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_v2(x, mean_count)).reset_index(drop=True)
+        elif self.depression_feature == 'MH_PHQ_S':
+            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/2) 
+            # Apply the oversampling function to each group
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_v2(x, mean_count)).reset_index(drop=True)
+
+        return True
+    
+sample_method = False
+sampler = 2
+
 Dataset = Synthetic_Patient_Dataset(threshold = 3, actigraphy_data_operator = '-', depression_classifier_feature = 'BP_PHQ_9', percent_of_dataset = 100)
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
 Dataset.remove_features()
@@ -188,9 +226,20 @@ Dataset.create_Synthetic_Dataset()
 Dataset.calculate_actigraphy()
 Dataset.compute_features()
 Dataset.remove_actigraphy()
-#Dataset.dataset_oversample()
+
+if sampler == 1:
+    Dataset.particicipant_distribution()
+    Dataset.dataset_oversample()
+    Dataset.particicipant_distribution(before_sampling=False)
+elif sampler == 2:
+    Dataset.particicipant_distribution(sampler=2)
+    sample_method = Dataset.dataset_oversample_v2()
+    Dataset.particicipant_distribution(before_sampling=False, sampler=2)
+
 print_information(Dataset.id_pairs_df)
 
-Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
-
+if sample_method:
+    Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}_v2.csv')
+else:
+    Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
 

@@ -145,6 +145,19 @@ def sampling(group, target_count, depression_feature):
 
     return balanced_group
 
+def sampling_v2(group, target_count):
+    if len(group) < target_count:
+        # Calculate how many samples we need
+        samples_needed = target_count - len(group)
+        # Randomly sample with replacement
+        additional_samples = group.sample(samples_needed, replace=True)
+        # Concatenate the original group with the additional samples
+        balanced_group = pd.concat([group, additional_samples])
+    elif len(group) >= target_count:
+        # Undersampling: Randomly sample without replacement
+        balanced_group = group.sample(target_count, replace=False)
+  
+    return balanced_group
 
 def compute_energy(coeff):
     return np.sum(coeff ** 2)
