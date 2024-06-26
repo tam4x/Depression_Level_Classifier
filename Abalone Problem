@@ -1,0 +1,301 @@
+# His code
+pip install ucimlrepo
+
+from ucimlrepo import fetch_ucirepo 
+# fetch dataset 
+abalone = fetch_ucirepo(id=1) 
+# data (as pandas dataframes) 
+X = abalone.data.features 
+y = abalone.data.targets 
+# metadata 
+# print(abalone.metadata) 
+# variable information 
+print(abalone.variables) 
+X
+y
+
+#Abalone is a type of consumable snail whose price varies as per its age. The aim is to predict the age of abalone from physical measurements. The age of abalone is traditionally determined by cutting the shell through the cone, staining it, and counting the number of rings through a microscope — a boring and time-consuming task. Other measurements, which are easier to obtain, are used to predict the age.
+
+### Features
+
+#- **Sex**: This is the gender of the abalone and has categorical values (M, F, or I).
+#- **Length**: The longest measurement of the abalone shell in mm. Continuous numeric value.
+#- **Diameter**: The measurement of the abalone shell perpendicular to length in mm. Continuous numeric value.
+#- **Height**: Height of the shell in mm. Continuous numeric value.
+#- **Whole Weight**: Weight of the abalone in grams. Continuous numeric value.
+#- **Shucked Weight**: Weight of just the meat in the abalone in grams. Continuous numeric value.
+#- **Viscera Weight**: Weight of the abalone after bleeding in grams. Continuous numeric value.
+#- **Shell Weight**: Weight of the abalone after being dried in grams. Continuous numeric value.
+#- **Rings**: This is the target feature that we will train the model to predict. As mentioned earlier, we are interested in the age of the abalone and it has been established that the number of rings + 1.5 gives the age. Discrete numeric value.
+
+#answer 
+# This is based on this study 
+# https://kunjmehta10.medium.com/intro-to-machine-learning-via-the-abalone-age-prediction-problem-4e290a8b2ed3
+# give 3 Machines. We are try to find the best Machine to model the problem
+
+
+#Intall different things 
+
+from ucimlrepo import fetch_ucirepo
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+import pandas as pd
+from pandas import DataFrame
+import matplotlib.pyplot as plot
+import numpy as np
+%matplotlib inline
+
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+import pandas as pd
+import seaborn as sns
+import numpy as np
+from sklearn.model_selection import KFold
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import cross_val_predict
+from numpy import loadtxt
+
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
+from sklearn.metrics import accuracy_score, roc_auc_score
+import matplotlib.pyplot as plt
+
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_predict, KFold
+from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet, LogisticRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, AdaBoostRegressor
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error, r2_score
+
+#Step 1: Analyze the data -- Differention between the Sex because it has an effect on the weight, heigtht and so on of the snail. 
+import pandas as pd
+from pandas import DataFrame
+import matplotlib.pyplot as plot
+import numpy as np
+%matplotlib inline
+#load data again
+target_url = ("http://archive.ics.uci.edu/ml/machine-"
+              "learning-databases/abalone/abalone.data")
+abalone = pd.read_csv(target_url,header=None, prefix="V")
+abalone.columns = ['Sex', 'Length', 'Diameter', 'Height',
+                   'Whole weight', 'Shucked weight',
+                   'Viscera weight', 'Shell weight', 'Rings']
+abalone.head()
+abalone.describe()
+
+
+print(y.shape)
+print(X.shape)
+
+df = pd.DataFrame(y)
+y=df['Rings']
+print(y)
+
+abalone.isnull().sum(axis = 0) # if there are null values 
+
+abalone = pd.get_dummies(abalone)
+abalone.head()
+
+#corr in the matrix 
+corMat = DataFrame(abalone.iloc[:,:8].corr()).values
+corMat = np.around(corMat, decimals = 3)
+feature_importance = DataFrame(abalone.iloc[:,:8].corr()).iloc[:-1, -1].sort_values(ascending=False)
+print('Features in Descending Order of Importance', list(feature_importance.index))
+columns = ['Length', 'Diameter', 'Height', 'Whole weight', 'Shucked weight', 'Viscera weight', 'Shell weight', 'Rings']
+fig, ax = plot.subplots(figsize = (20,60))
+im = ax.imshow(corMat)
+ax.set_xticks(range(len(corMat)))
+ax.set_yticks(range(len(corMat)))
+ax.set_xticklabels(columns)
+ax.set_yticklabels(columns)
+for i in range(8):
+    for j in range(8):
+        text = ax.text(j, i, corMat[i, j],
+                       ha="center", va="center", color="w", fontsize=20)
+
+print(set(abalone['Rings'])) # go get the right nummber of bins 
+n, bins, patches = plot.hist(abalone['Rings'], bins = 29) 
+
+y = abalone["Rings"]
+X = abalone.drop(columns = "Rings")
+train_X, valid_X, train_y, valid_y = train_test_split(X, y, test_size=0.4, random_state=2
+
+#Idea: Test different machine learning problems to determine which one is the best with MSE
+models = {
+    "Linear Regression": LinearRegression(),
+    "LASSO Regression": Lasso(),
+    "Ridge Regression": Ridge(),
+    "Elastic Net": ElasticNet(),
+    "Decision Tree": DecisionTreeRegressor(),
+    "Random Forest": RandomForestRegressor(),
+    "Gradient Boosting": GradientBoostingRegressor(),
+    "XGBoost": xgb.XGBRegressor(),
+    "AdaBoost": AdaBoostRegressor(),
+    "Support Vector Machine": SVR(),
+    "K-Nearest Neighbors": KNeighborsRegressor(),
+    "Logistic Regression": LogisticRegression(max_iter=1000)
+}
+# Cross-validation
+cv = KFold(n_splits=5, random_state=42, shuffle=True)
+# Evaluate models with both MSE and R^2 metrics
+results = {}
+for name, model in models.items():
+    y_pred = cross_val_predict(model, train_X, train_y, cv=cv)
+    mse = mean_squared_error(train_y, y_pred)
+    r2 = r2_score(train_y, y_pred)
+    results[name] = {'MSE': mse, 'R^2': r2}
+results_sorted = {k: v for k, v in sorted(results.items(), key=lambda item: item[1]['MSE'])}
+print(results_sorted)
+
+# Define parameter grids for hyperparameter tuning
+param_grids = {
+    "Gradient Boosting": {
+        'n_estimators': [100, 300],
+        'learning_rate': [0.05, 0.1],
+        'max_depth': [3, 5],
+        'subsample': [0.8, 1.0]
+    },
+    "Random Forest": {
+        'n_estimators': [100, 300],
+        'max_depth': [10, 20],
+        'min_samples_split': [2, 5],
+        'min_samples_leaf': [1, 2]
+    },
+    "Ridge Regression": {
+        'alpha': [0.1, 1.0, 10.0]
+    }
+}
+models = {
+    "Gradient Boosting": GradientBoostingRegressor(random_state=42),
+    "Random Forest": RandomForestRegressor(random_state=42),
+    "Ridge Regression": Ridge()}
+
+cv = KFold(n_splits=5, random_state=42, shuffle=True)
+Perform GridSearchCV for each model
+best_estimators = {}
+for model_name, model in models.items():
+    print(f"Tuning hyperparameters for {model_name}...")
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grids[model_name], cv=cv, scoring='neg_mean_squared_error', n_jobs=-1, verbose=2)
+    grid_search.fit(train_X, train_y)
+    best_estimators[model_name] = grid_search.best_estimator_
+    print(f"Best parameters for {model_name}: {grid_search.best_params_}")
+    print(f"Best cross-validated MSE for {model_name}: {grid_search.best_score_}")
+
+test_results = {}
+for model_name, model in best_estimators.items():
+    y_pred_test = model.predict(test_X)
+    test_mse = mean_squared_error(test_y, y_pred_test)
+    test_results[model_name] = test_mse
+    print(f"Test MSE for {model_name}: {test_mse}")
+print(test_results)
+
+#Find best model with Grid Search
+results = []
+for model_name, model in models.items():
+    print(f"Training {model_name}...")
+    grid_search = GridSearchCV(model, param_grids[model_name], cv=5, scoring='neg_mean_squared_error')
+    grid_search.fit(X_train_scaled, y_train)
+    best_model = grid_search.best_estimator_
+    y_pred = best_model.predict(X_test_scaled)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    results.append((model_name, grid_search.best_params_, mse, r2, best_model, y_pred))
+
+for result in results:
+    print(f"Model: {result[0]}")
+    print(f"Best Parameters: {result[1]}")
+    print(f"Test MSE: {result[2]}")
+    print(f"Test R^2: {result[3]}")
+    print()
+
+#cross-validation on the best Ridge Regression model
+cv_scores = cross_val_score(best_ridge_model, X_train_scaled, y_train, cv=5, scoring='neg_mean_squared_error')
+print(f"Cross-validated MSE for Ridge Regression: {-cv_scores.mean()} ± {cv_scores.std()}")
+cv_r2_scores = cross_val_score(best_ridge_model, X_train_scaled, y_train, cv=5, scoring='r2')
+print(f"Cross-validated R^2 for Ridge Regression: {cv_r2_scores.mean()} ± {cv_r2_scores.std()}")
+
+
+# Ridge Regression more complex
+param_grids = {
+    "Ridge Regression": {
+        'alpha': [0.1, 1.0, 10.0]
+    }
+}
+ridge_model = Ridge()
+grid_search_ridge = GridSearchCV(ridge_model, param_grids["Ridge Regression"], cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=2)
+grid_search_ridge.fit(X_train_scaled, y_train)
+best_ridge_model = grid_search_ridge.best_estimator_
+joblib.dump(best_ridge_model, 'best_ridge_model.pkl')
+joblib.dump(scaler, 'scaler.pkl')
+y_pred_ridge = best_ridge_model.predict(X_test_scaled)
+mse_ridge = mean_squared_error(y_test, y_pred_ridge)
+r2_ridge = r2_score(y_test, y_pred_ridge)
+print(f"Best Parameters for Ridge Regression: {grid_search_ridge.best_params_}")
+print(f"Test MSE for Ridge Regression: {mse_ridge}")
+print(f"Test R^2 for Ridge Regression: {r2_ridge}")
+
+#Predicted age of the abalone 
+best_ridge_model = joblib.load('best_ridge_model.pkl')
+scaler = joblib.load('scaler.pkl')
+def predict_snail_age(length, diameter, height, whole_weight, shucked_weight, viscera_weight, shell_weight, sex):
+    input_data = pd.DataFrame({
+        'Length': [length],
+        'Diameter': [diameter],
+        'Height': [height],
+        'WholeWeight': [whole_weight],
+        'ShuckedWeight': [shucked_weight],
+        'VisceraWeight': [viscera_weight],
+        'ShellWeight': [shell_weight],
+        'Sex_F': [1 if sex == 'F' else 0],
+        'Sex_I': [1 if sex == 'I' else 0],
+        'Sex_M': [1 if sex == 'M' else 0]
+    })
+    input_data_scaled = scaler.transform(input_data)
+    predicted_rings = best_ridge_model.predict(input_data_scaled)
+    age = predicted_rings[0] + 1.5
+    return age
+
+# Example 
+length = 0.3
+diameter = 0.2
+height = 0.20
+whole_weight = 0.7
+shucked_weight = 0.3
+viscera_weight = 0.1
+shell_weight = 0.2
+sex = 'F'
+predicted_age = predict_snail_age(length, diameter, height, whole_weight, shucked_weight, viscera_weight, shell_weight, sex)
+print(f"The predicted age of the abalone is: {predicted_age} years")
+
+
+# Plot feature importances for Random Forest
+if 'Random Forest' in best_estimators:
+    rf_model = best_estimators['Random Forest']
+    rf_importances = pd.Series(rf_model.feature_importances_, index=X.columns)
+    rf_importances.nlargest(10).plot(kind='barh')
+    plt.title('Top 10 Feature Importances for Random Forest')
+    plt.show()
+
+# Plot feature importances for Gradient Boosting
+if 'Gradient Boosting' in best_estimators:
+    gb_model = best_estimators['Gradient Boosting']
+    gb_importances = pd.Series(gb_model.feature_importances_, index=X.columns)
+    gb_importances.nlargest(10).plot(kind='barh')
+    plt.title('Top 10 Feature Importances for Gradient Boosting')
+    plt.show()
+
+
+
+
+
+
+
+
