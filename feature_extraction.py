@@ -62,5 +62,10 @@ def extractor(df, threshold=0.9):
     else:
         print("No excluded features found.")
 
+    # print lists of selected/excluded features
+    print("Selected Features:", selected_features)
+    print("Excluded Features:", excluded_features)
+
+
     # return lists of selected and excluded features
     return selected_features, excluded_features
