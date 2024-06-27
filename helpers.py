@@ -161,6 +161,33 @@ def sampling_v2(group, target_count):
   
     return balanced_group
 
+def sampling_v3(group, number_groups, number_without_0):
+    if group.name == 0:
+        target_count = int(number_without_0 / number_groups)
+        balanced_group = group.sample(target_count, replace=False)
+
+    elif len(group) > (number_without_0 / 2) or len(group) > 10000:
+        target_count = int(number_without_0 / number_groups)
+        balanced_group = group.sample(target_count, replace=False)
+
+    elif len(group) < 100:
+        target_count = int(number_without_0 / number_groups)
+        samples_needed = target_count - len(group)
+        if samples_needed > 100:
+            samples_needed = 100 - len(group)
+            additional_samples = group.sample(samples_needed, replace=True)
+            # Concatenate the original group with the additional samples
+            balanced_group = pd.concat([group, additional_samples])
+        else:
+            additional_samples = group.sample(samples_needed, replace=True)
+            # Concatenate the original group with the additional samples
+            balanced_group = pd.concat([group, additional_samples])
+    else:
+        # Return the original group
+        balanced_group = group
+
+    return balanced_group
+
 def compute_energy(coeff):
     return np.sum(coeff ** 2)
 

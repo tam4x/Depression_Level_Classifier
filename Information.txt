@@ -1,0 +1,24 @@
+- Data Processing
+
+- Pier
+    - Used 3 different Neural Network Models
+        - Simple Architecture with RELU as activation Function
+        - Complexer Architecture with RELU activation Function
+        - Complexer Architecture with tanh activation Function
+    - performed hyperparameter to get the best model, learning rate, optimizer and optional momentum
+    - Same procedure for adaboost where I used the depth, number of trees and learning rate for hyperparameter tuning
+    - after i got the best parameters for the models i trained them for longer on more iterations to get a better result
+
+    - Results
+        - Confusion Matrices
+        - ROC Curves
+        - Metrics can be found under Results/Metrics.csv
+
+- Ben
+
+- Benedikt
+
+- Luisa
+
+- Mo
+

@@ -214,10 +214,18 @@ class Synthetic_Patient_Dataset:
 
         return True
     
-sample_method = False
-sampler = 2
+    def dataset_oversample_v3(self):
+        number_groups = len(self.id_pairs_df.groupby('d_PHQ').size())
+        number_without_0 = self.id_pairs_df.groupby('d_PHQ').size()
+        number_without_0 = number_without_0[number_without_0.index != 0].sum()
+        self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda group: sampling_v3(group, number_groups, number_without_0)).reset_index(drop=True)
 
-Dataset = Synthetic_Patient_Dataset(threshold = 3, actigraphy_data_operator = '-', depression_classifier_feature = 'BP_PHQ_9', percent_of_dataset = 100)
+        return True
+    
+sample_method = False
+sampler = 3
+
+Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
 Dataset.load_data(path_all='ALL/', path_pam='PAM/')
 Dataset.remove_features()
 Dataset.create_intervalls()
@@ -235,11 +243,12 @@ elif sampler == 2:
     Dataset.particicipant_distribution(sampler=2)
     sample_method = Dataset.dataset_oversample_v2()
     Dataset.particicipant_distribution(before_sampling=False, sampler=2)
+elif sampler == 3:
+    Dataset.particicipant_distribution(sampler=3)
+    sample_method = Dataset.dataset_oversample_v3()
+    Dataset.particicipant_distribution(before_sampling=False, sampler=3)
 
 print_information(Dataset.id_pairs_df)
 
-if sample_method:
-    Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}_v2.csv')
-else:
-    Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
+Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}_v_{sampler}.csv')
 

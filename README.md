@@ -2,16 +2,9 @@
 
 ## TODO
 - Visualize Data to get correlations between features (Important)
+- Structure the same as the Pier Folder (Important)
 - Oversample or Undersample Groups that are not well represented (maybe use undersampling, when threshold is really high. (BIAS))
 - Use evaluation metrics (Confusion Matrix, ROC, F1 Score etc.)
-
-## Explanation
-- Survey 1 Datapoint per Participant
-- New Patients have to be in the same group_pack and PAM[ID1] - PAM[ID2] -> new actigraphy data n^2 -n participants (75000 roughly)
-- use the new actigraphy data to extract features from and add these features to the synthetic participant dataframe
-- Use abs(PHQ9P2 - PHQ9P1) > threshold as a classification for depression or the abs(mh_PHQ_SP2 - mh_PHQ_SP1) > threshold as a classification
-
-
 ## Project Structure
 - Folders
     - ALL (Here are the ALL-Files) -> needs to be created
@@ -25,7 +18,12 @@
             - when using 10 as a threshold after sampling with method_1 35 % of the dataset are not depressed (13450 / (13450+24210))
             - when using 3 as a threshold after sampling with method_2 42 % of the dataset are not depressed (3228 / (3228 + 4304))
         - FNN
-        - Adaboost         
+        - Adaboost
+        - Evaluation (Evaluation and creation of the Confusion Matrices and ROC Curve)
+        - NN (NN Functions)
+        - Confusion_Matrix (All the 8 Confusion Matrices -> 4 Datasets and 2 Models)
+        - Models (For Neural Network)
+        - Results (Of the Hyperparameter Tuning, was used to find the optimal Hyperparameters and the Metrices)       
     - Luisa (Threshold (12 and 2))
         - DT
         - RF
@@ -46,3 +44,8 @@
     - actigraphy_data_operator (+, -)
     - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
     - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^
+- Information.txt (Results of the different Models)
+- Problem2
+- Problem3
+- Problem4
+- Problem5
