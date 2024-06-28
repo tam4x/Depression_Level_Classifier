@@ -5,7 +5,7 @@ Problem 1: Depression LevelClassification Using Machine Learning
 
 The first problem is split between the preprocessing and analysis in the .py files feature_extraction.py Synthetic_Patient.py helpers.py Data_processing.ipynb and the model training in the folders named after each member of our group. Inside these folders there are the machines, as well as folders with some (visual) results, that we'll further compare and analyse in our presentation. 
 
-    - Pier (Threshold (10 and 3))
+- Pier (Threshold (10 and 3))
         - Datasets
             - when using 10 as a threshold after sampling with method_1 72 % of the dataset are not depressed (38958 / (38958+14700))
             - when using 3 as a threshold after sampling with method_1 88 % of the dataset are not depressed (13346 / (13346 + 1802))
