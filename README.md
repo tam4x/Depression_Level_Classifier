@@ -23,7 +23,7 @@
         - NN (NN Functions)
         - Confusion_Matrix (All the 8 Confusion Matrices -> 4 Datasets and 2 Models)
         - Models (For Neural Network)
-        - Results (Of the Hyperparameter Tuning, was used to find the optimal Hyperparameters and the Metrices)       
+        - Results (Of the Hyperparameter Tuning, was used to find the optimal Hyperparameters and the Metrices of the models)       
     - Luisa (Threshold (12 and 2))
         - DT
         - RF
