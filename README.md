@@ -1,16 +1,10 @@
 # Depression Classifier
 
-## TODO
-- Visualize Data to get correlations between features (Important)
-- Structure the same as the Pier Folder (Important)
-- Oversample or Undersample Groups that are not well represented (maybe use undersampling, when threshold is really high. (BIAS))
-- Use evaluation metrics (Confusion Matrix, ROC, F1 Score etc.)
 ## Project Structure
-- Folders
-    - ALL (Here are the ALL-Files) -> needs to be created
-    - HWP (Here is the weird data) -> needs to be created
-    - PAM (Here is the actigraphy data or PAM data) -> needs to be created
-    - data (here are the processed datasets located) -> needs to be created
+Problem 1: Depression LevelClassification Using Machine Learning
+
+The first problem is split between the preprocessing and analysis in the .py files feature_extraction.py Synthetic_Patient.py helpers.py Data_processing.ipynb and the model training in the folders named after each member of our group. Inside these folders there are the machines, as well as folders with some (visual) results, that we'll further compare and analyse in our presentation. 
+
     - Pier (Threshold (10 and 3))
         - Datasets
             - when using 10 as a threshold after sampling with method_1 72 % of the dataset are not depressed (38958 / (38958+14700))
@@ -36,7 +30,7 @@
     - Mo (Threshold (8 and 1))
         - Lasso
         - Ridge
-        - Logistic Regression ?
+        - Logistic Regression ?    
 - Data_processing (Only for Scripting functionality is in Synthetic_Patient)
 - helpers (Some helpers Functions)
 - Synthetic_Patient (File to create the processed Dataframe with parameters)
@@ -44,8 +38,5 @@
     - actigraphy_data_operator (+, -)
     - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
     - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^
-- Information.txt (Results of the different Models)
-- Problem2
-- Problem3
-- Problem4
-- Problem5
+
+The other problems are solved inside their respective folder. 
