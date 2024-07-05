@@ -49,7 +49,7 @@ class Synthetic_Patient_Dataset:
     def create_intervalls(self):
         print('Creating Intervalls')
         self.all14_df['HE_BMI'], self.all16_df['HE_BMI'] = self.all14_df['HE_BMI'].apply(BMI_range), self.all16_df['HE_BMI'].apply(BMI_range)
-        self.pam14_df['sex'], self.pam16_df['sex'], self.all14_df['sex'], self.all16_df['sex'] = self.pam14_df['sex'].apply(Sex_name), self.pam16_df['sex'].apply(Sex_name), self.all14_df['sex'].apply(Sex_name), self.all16_df['sex'].apply(Sex_name)
+        self.pam14_df['sex'], self.pam16_df['sex'], self.all14_df['sex'], self.all16_df['sex'] = self.pam14_df['sex'].apply(Sex_name), self.pam16_df['sex'].apply(Sex_name), 				  self.all14_df['sex'].apply(Sex_name), self.all16_df['sex'].apply(Sex_name)
         self.pam14_df['age'], self.pam16_df['age'], self.all14_df['age'], self.all16_df['age'] = self.pam14_df['age'].apply(Age_range), self.pam16_df['age'].apply(Age_range), self.all14_df['age'].apply(Age_range), self.all16_df['age'].apply(Age_range)
 
     def process_data(self):
@@ -221,34 +221,42 @@ class Synthetic_Patient_Dataset:
         self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda group: sampling_v3(group, number_groups, number_without_0)).reset_index(drop=True)
 
         return True
-    
-sample_method = False
-sampler = 3
+        
+    def dataset_sample(self):
+        # Apply the oversampling function to each group
+        if self.depression_feature == 'BP_PHQ_9':
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_small(x, 80, self.depression_feature)).reset_index(drop=True)
+        else:
+            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_small(x, 40, self.depression_feature)).reset_index(drop=True)
 
-Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
-Dataset.load_data(path_all='ALL/', path_pam='PAM/')
-Dataset.remove_features()
-Dataset.create_intervalls()
-Dataset.process_data()
-Dataset.create_Synthetic_Dataset()
-Dataset.calculate_actigraphy()
-Dataset.compute_features()
-Dataset.remove_actigraphy()
 
-if sampler == 1:
-    Dataset.particicipant_distribution()
-    Dataset.dataset_oversample()
-    Dataset.particicipant_distribution(before_sampling=False)
-elif sampler == 2:
-    Dataset.particicipant_distribution(sampler=2)
-    sample_method = Dataset.dataset_oversample_v2()
-    Dataset.particicipant_distribution(before_sampling=False, sampler=2)
-elif sampler == 3:
-    Dataset.particicipant_distribution(sampler=3)
-    sample_method = Dataset.dataset_oversample_v3()
-    Dataset.particicipant_distribution(before_sampling=False, sampler=3)
+# sample_method = False
+# sampler = 3
 
-print_information(Dataset.id_pairs_df)
+# Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
+# Dataset.load_data(path_all='ALL/', path_pam='PAM/')
+# Dataset.remove_features()
+# Dataset.create_intervalls()
+# Dataset.process_data()
+# Dataset.create_Synthetic_Dataset()
+# Dataset.calculate_actigraphy()
+# Dataset.compute_features()
+# Dataset.remove_actigraphy()
+# Dataset.dataset_sample()
 
-Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}_v_{sampler}.csv')
+# if sampler == 1:
+#     Dataset.particicipant_distribution()
+#     Dataset.dataset_oversample()
+#     Dataset.particicipant_distribution(before_sampling=False)
+# elif sampler == 2:
+#     Dataset.particicipant_distribution(sampler=2)
+#     sample_method = Dataset.dataset_oversample_v2()
+#     Dataset.particicipant_distribution(before_sampling=False, sampler=2)
+# elif sampler == 3:
+#     Dataset.particicipant_distribution(sampler=3)
+#     sample_method = Dataset.dataset_oversample_v3()
+#     Dataset.particicipant_distribution(before_sampling=False, sampler=3)
 
+# print_information(Dataset.id_pairs_df)
+
+# Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
