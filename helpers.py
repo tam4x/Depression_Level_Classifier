@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 def process_data(data: pd.DataFrame) -> pd.DataFrame:
     # Drop rows with missing target values
-    
+
     for column in data.columns:
         if column == 'sex':
             # Count the number of NaN values
@@ -18,7 +18,7 @@ def process_data(data: pd.DataFrame) -> pd.DataFrame:
 
             # Create a list of random values (1 or 2) with the same length as the number of NaN values
             random_values = [random.choice([1, 2]) for _ in range(nan_count)]
-           
+
             # Create an iterator from the random values list
             random_values_iter = iter(random_values)
 
@@ -30,6 +30,9 @@ def process_data(data: pd.DataFrame) -> pd.DataFrame:
 
         elif column in ['id','mod_d', 'ID']:
             pass
+
+        elif column in ["BP_PHQ_1", "BP_PHQ_2", "BP_PHQ_3", "BP_PHQ_4", "BP_PHQ_5", "BP_PHQ_6", "BP_PHQ_7", "BP_PHQ_8", "BP_PHQ_9", "MH_PHQ_S"]:
+            data[column] = data[column].fillna(int(data[column].mean()))
 
         else:
             data[column] = data[column].fillna(data[column].mean())
@@ -44,7 +47,7 @@ def Depression_Severity_(value): #for BP_PHQ_9
         return "Disorder"
     elif np.isnan(value):
         return "None_disorder"
-    
+
 def Depression_Severity(value):#for mh_PHQ_S
     if 0 <= value <= 4:
         return "None-minimal"
@@ -58,7 +61,7 @@ def Depression_Severity(value):#for mh_PHQ_S
         return "Severe"
     elif np.isnan(value):
         return "None-minimal"
-    
+
 def BMI_range(value):
     if value < 18.5:
         return "underweight"
@@ -70,7 +73,7 @@ def BMI_range(value):
         return "obese"
     elif np.isnan(value):
         return "Healthy Weight"
-    
+
 def Sex_name(value):
     if value == 1:
         return "Male"
@@ -104,7 +107,7 @@ def Age_range(value):
         return "[59-65]"
     elif value < 19:
         return "[19-23]"
-    
+
 
 def print_information(df):
     df_grouped = df.groupby('d_PHQ')
@@ -117,73 +120,48 @@ def print_information(df):
 def sampling(group, target_count, depression_feature):
     if depression_feature == 'BP_PHQ_9':
         if len(group) < target_count:
-            # Calculate how many samples we need
             samples_needed = int((target_count - len(group)) / 4)
-            # Randomly sample with replacement
             additional_samples = group.sample(samples_needed, replace=True)
-            # Concatenate the original group with the additional samples
             balanced_group = pd.concat([group, additional_samples])
+
         elif len(group) > 10*target_count:
-            # Undersampling: Randomly sample without replacement
             balanced_group = group.sample(10*target_count, replace=False)
         else:
-            # Return the original group
             balanced_group = group
 
     elif depression_feature == 'MH_PHQ_S':
         if len(group) < target_count:
-            # Calculate how many samples we need
             samples_needed = int((target_count - len(group)) / 2)
-            # Randomly sample with replacement
             additional_samples = group.sample(samples_needed, replace=True)
-            # Concatenate the original group with the additional samples
             balanced_group = pd.concat([group, additional_samples])
+
         elif len(group) > 4*target_count:
-            # Undersampling: Randomly sample without replacement
             balanced_group = group.sample(4*target_count, replace=False)
         else:
-            # Return the original group
             balanced_group = group
 
     return balanced_group
 
 def sampling_v2(group, target_count):
     if len(group) < target_count:
-        # Calculate how many samples we need
         samples_needed = target_count - len(group)
-        # Randomly sample with replacement
         additional_samples = group.sample(samples_needed, replace=True)
-        # Concatenate the original group with the additional samples
         balanced_group = pd.concat([group, additional_samples])
+
     elif len(group) >= target_count:
-        # Undersampling: Randomly sample without replacement
         balanced_group = group.sample(target_count, replace=False)
-  
+
     return balanced_group
 
-def sampling_v3(group, number_groups, number_without_0):
-    if group.name == 0:
-        target_count = int(number_without_0 / number_groups)
-        balanced_group = group.sample(target_count, replace=False)
-
-    elif len(group) > (number_without_0 / 2) or len(group) > 10000:
-        target_count = int(number_without_0 / number_groups)
-        balanced_group = group.sample(target_count, replace=False)
-
-    elif len(group) < 100:
-        target_count = int(number_without_0 / number_groups)
+def sampling_small(group, target_count, depression_feature):
+    if len(group) < target_count:
         samples_needed = target_count - len(group)
-        if samples_needed > 100:
-            samples_needed = 100 - len(group)
-            additional_samples = group.sample(samples_needed, replace=True)
-            # Concatenate the original group with the additional samples
-            balanced_group = pd.concat([group, additional_samples])
-        else:
-            additional_samples = group.sample(samples_needed, replace=True)
-            # Concatenate the original group with the additional samples
-            balanced_group = pd.concat([group, additional_samples])
+        additional_samples = group.sample(samples_needed, replace=True)
+        balanced_group = pd.concat([group, additional_samples])
+
+    elif len(group) > target_count:
+        balanced_group = group.sample(target_count, replace=False)
     else:
-        # Return the original group
         balanced_group = group
 
     return balanced_group
@@ -210,16 +188,10 @@ def compute_features(data):
         features.append(compute_std(coeff))
         features.append(compute_entropy(coeff))
 
-    # Convert the feature list to a numpy array
     features = np.array(features)
 
-    # (Optional) Normalize or standardize the features
     scaler = StandardScaler()
     features = scaler.fit_transform(features.reshape(-1, 1)).flatten()
-
-    # print("Extracted features:")
-    #print(features)
-
     return features
 
 
@@ -230,7 +202,7 @@ def compute_metrics(TN, FP, FN, TP):
     f1 = 2 * (precision * recall) / (precision + recall)
     FNR = FN / (FN + TP)
     return accuracy, precision, recall, f1, FNR
-    
+
 
 def create_roc(fpr, tpr, model_names):
     plt.figure(figsize=(8, 6))
@@ -252,4 +224,4 @@ def create_roc(fpr, tpr, model_names):
     plt.savefig(f'ROC/ROC_All_Models.png')
 
 
-    
+
