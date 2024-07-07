@@ -1,11 +1,5 @@
 import sys
-import os
-
-# Add the path to the directory where your module is located
-module_path = os.path.abspath(os.path.join('..', 'C:\\Users\\pier1\\OneDrive\\Desktop\\uni\\Master\\2.Semester\\Machine Learning (WIWI)\\Project\\Data for depression\\'))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
+sys.path.append("..")
 # Now you can import your module
 from helpers import *
 import pandas as pd
@@ -55,6 +49,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.features[idx], self.targets[idx]
 
+# Here the models are defined with different hidden layers and activation functions
 
 class Depression_Classifier_v_0(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -159,11 +154,7 @@ def train_model_cross_validation(model, train_dataloader, validation_dataloader,
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-            if (i + 1) % 100 == 0:
-                #print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_dataloader)}], Loss: {running_loss / 100:.4f}')
-                #running_loss = 0.0
-                pass
-
+          
         # Calculate validation loss and monitor early stopping
         model.eval()
         with torch.no_grad():
@@ -174,9 +165,6 @@ def train_model_cross_validation(model, train_dataloader, validation_dataloader,
                 loss = criterion(outputs,labels)  # Ensure labels are in correct shape
                 val_loss += loss.item()
             val_loss /= len(validation_dataloader)
-            
-            # Print epoch statistics
-            #print(f'Epoch [{epoch + 1}/{num_epochs}], Training Loss: {running_loss / len(train_dataloader):.4f}, Validation Loss: {val_loss:.4f}')
             
             # Early stopping logic
             if val_loss < best_val_loss - min_delta:
@@ -209,17 +197,20 @@ def evaluate_model(model, dataloader, criterion, device):
         return avg_loss, accuracy
 
 
-
+#Function for cross validation
 def cross_validation(train_dataloader, validation_dataloader, test_dataloader, criterion, num_epochs, device):
+    # Hyperparameters being assigned here
     input_size = 56
     hidden_size = 128
     num_epochs = 30
     learning_rate_values = [0.001,0.003,0.006,0.01]
     momentum_values = [0.9, 0.95,0.99]
     results = {}
-    #criterion = nn.BCEWithLogitsLoss()  # Combines sigmoid and binary cross-entropy loss
     optimizers = ['Adam', 'SGD']
     number = 1
+    accuracys = []
+
+    # Iterating over different models, optimizers and learning rates, momentum values to get the best model
     for i in range(3):
         for optimizer in optimizers:
             if optimizer == 'Adam':
@@ -242,6 +233,7 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         'validation_loss': validation_loss,
                         'accuracy': accuracy
                     }
+                    accuracys.append(accuracy)
                     print(f'Model: {number} is being trained with optimizer: {optimizer} and learning rate: {learning_rate} and Model_{i}')
                     number += 1
             else:
@@ -263,30 +255,27 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         'validation_loss': validation_loss,
                         'accuracy': accuracy
                     }
+                    accuracys.append(accuracy)
                     print(f'Model: {number} is being trained with optimizer: {optimizer} and learning rate: {learning_rate} and Model_{i}')
                     number += 1
         
-    return results
+    return results, accuracys
     
-
-def evaluate(model, device, depression_feature, sample_version=1):
-
+# Function for evaluation
+def evaluate(model, device, depression_feature):
+    # Load the data
     if depression_feature == 'BP_PHQ_9':
-        if sample_version == 1:
-            df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100.csv')
-        else:
-            df = pd.read_csv('..\data\Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100_v2.csv')
+            df = pd.read_csv('../data/Threshold_3_Operator_-_Depressionfeature_BP_PHQ_9_PercentofDataset_100.csv')
+    
     elif depression_feature == 'MH_PHQ_S':
-        if sample_version == 1:
-            df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100.csv')
-        else:
-            df = pd.read_csv('..\data\Threshold_10_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100_v2.csv')
-
-    _, test_df = train_test_split(df, test_size=0.2, random_state=41)
+            df = pd.read_csv('../data/Threshold_15_Operator_-_Depressionfeature_MH_PHQ_S_PercentofDataset_100.csv')
+     
+    # Split the data into training and testing sets 0.8 is the training size and 0.2 is the testing size
+    _, test_df = train_test_split(df, test_size=0.1, random_state=42)
     test_features, test_targets = df_to_tensor(test_df, features_column='FEATURES', target_col='Depression')
 
     test_dataset = CustomDataset(test_features, test_targets)
-    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=2, shuffle=False)
 
     # Test the model
     true_labels = []
@@ -316,7 +305,7 @@ def evaluate(model, device, depression_feature, sample_version=1):
     plt.xlabel('Predicted Labels')
     plt.ylabel('True Labels')
     plt.title('Confusion Matrix')
-    plt.savefig(f'Confusion_Matrix/Confusion_Matrix__MLP_{depression_feature}_v{sample_version}.png')
+    plt.savefig(f'Confusion_Matrix/Confusion_Matrix_MLP_{depression_feature}.png')
     TN, FP, FN, TP = cm.ravel()
 
     return true_labels_all, predicted_labels_all, predicted_probabilities_all, TN, FP, FN, TP
