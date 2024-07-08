@@ -30,7 +30,7 @@ The first problem is split between the preprocessing and analysis in the .py fil
     - Mo (Threshold (13 and 1))
         - Lasso
         - Ridge
-        - Logistic Regression ?    
+        - Logistic Regression 
 - Data_processing (Only for Scripting functionality is in Synthetic_Patient)
 - helpers (Some helpers Functions)
 - Synthetic_Patient (File to create the processed Dataframe with parameters)
