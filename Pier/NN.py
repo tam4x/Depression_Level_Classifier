@@ -120,10 +120,14 @@ class Depression_Classifier_v_2(nn.Module):
 
 # Define the training function
 def train_model(model, train_dataloader, criterion, optimizer, num_epochs, device):
+    # TURN ON TRAINING MODE
     model.train()
+    # TRAIN THE MODEL
     for epoch in range(num_epochs):
         running_loss = 0.0
+        # enumerate over the data loader
         for i, (inputs, labels) in enumerate(train_dataloader):
+            # perform the training loop -> forward, backward, optimize
             inputs, labels = inputs.to(device), labels.to(device).float().unsqueeze(1)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -136,13 +140,13 @@ def train_model(model, train_dataloader, criterion, optimizer, num_epochs, devic
                 running_loss = 0.0
 
 # Define the training function
-def train_model_cross_validation(model, train_dataloader, validation_dataloader, criterion, optimizer, num_epochs, device):
+def train_model_hyperparameter(model, train_dataloader, validation_dataloader, criterion, optimizer, num_epochs, device):
     # Early stopping parameters
     patience = 10  # Number of epochs to wait if no improvement is observed
     min_delta = 0.001  # Minimum change in the monitored quantity to qualify as improvement
     best_val_loss = float('inf')
     current_patience = 0
-
+    # train the model
     model.train()
     for epoch in range(num_epochs):
         running_loss = 0.0
@@ -179,6 +183,7 @@ def train_model_cross_validation(model, train_dataloader, validation_dataloader,
 # Define the evaluation function
 def evaluate_model(model, dataloader, criterion, device):
     model.eval()
+    # evaluate the model and calculate the loss
     with torch.no_grad():
         correct = 0
         total = 0
@@ -191,14 +196,15 @@ def evaluate_model(model, dataloader, criterion, device):
             predicted = (outputs >= 0.5).float()
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
+        # calcualte accuracy and average loss
         accuracy = 100 * correct / total
         avg_loss = running_loss / len(dataloader)
         print(f'Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%')
         return avg_loss, accuracy
 
 
-#Function for cross validation
-def cross_validation(train_dataloader, validation_dataloader, test_dataloader, criterion, num_epochs, device):
+#Function for hyperparameter tuning
+def hyperparameter_tuning(train_dataloader, validation_dataloader, test_dataloader, criterion, num_epochs, device):
     # Hyperparameters being assigned here
     input_size = 56
     hidden_size = 128
@@ -215,16 +221,17 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
         for optimizer in optimizers:
             if optimizer == 'Adam':
                 for learning_rate in learning_rate_values:
+                    # creating the models
                     if i == 0:
                         m = Depression_Classifier_v_0(input_size, hidden_size).to(device)
                     elif i == 1:
                         m = Depression_Classifier_v_1(input_size, hidden_size).to(device)
                     else:
                         m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
-
+                    # choosing optimizer
                     o = optim.Adam(m.parameters(), lr=learning_rate)
-                    
-                    train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
+                    # hyperparameter tuning
+                    train_model_hyperparameter(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
 
                     validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
 
@@ -246,7 +253,7 @@ def cross_validation(train_dataloader, validation_dataloader, test_dataloader, c
                         m = Depression_Classifier_v_2(input_size, hidden_size).to(device)
                         
                     o = optim.SGD(m.parameters(), lr=learning_rate, momentum=momentum)
-                    train_model_cross_validation(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
+                    train_model_hyperparameter(m, train_dataloader,validation_dataloader,criterion, o, num_epochs, device)
 
                     validation_loss, accuracy = evaluate_model(m, test_dataloader, criterion, device)
 
