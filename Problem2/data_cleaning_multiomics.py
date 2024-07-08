@@ -9,7 +9,8 @@ Created on Thu Jul  4 12:09:40 2024
 
 """
 Purpose: clean and cut the multiomics dataset to get just needed columns/features 
-which do not contain any NaNs
+which do not contain any NaNs. The processed dataframe is exported as csv and is
+used in this directory in the notebook "Problem 2".
 """
 #%% Setup environment
 
