@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 def process_data(data: pd.DataFrame) -> pd.DataFrame:
     # Drop rows with missing target values
-
+    # For numerical columns, fill missing values with the mean
     for column in data.columns:
         if column == 'sex':
             # Count the number of NaN values
@@ -38,7 +38,6 @@ def process_data(data: pd.DataFrame) -> pd.DataFrame:
             data[column] = data[column].fillna(data[column].mean())
 
     return data
-
 
 def Depression_Severity_(value): #for BP_PHQ_9
     if 0 <= value <= 4:
@@ -108,7 +107,6 @@ def Age_range(value):
     elif value < 19:
         return "[19-23]"
 
-
 def print_information(df):
     df_grouped = df.groupby('d_PHQ')
     for name, group in df_grouped:
@@ -116,42 +114,6 @@ def print_information(df):
         print(group.count())
     print('---Number of Non-Depression and Depression---')
     print(df.groupby('Depression').count()['ID_1'].iloc[0], df.groupby('Depression').count()['ID_1'].iloc[1])
-
-def sampling(group, target_count, depression_feature):
-    if depression_feature == 'BP_PHQ_9':
-        if len(group) < target_count:
-            samples_needed = int((target_count - len(group)) / 4)
-            additional_samples = group.sample(samples_needed, replace=True)
-            balanced_group = pd.concat([group, additional_samples])
-
-        elif len(group) > 10*target_count:
-            balanced_group = group.sample(10*target_count, replace=False)
-        else:
-            balanced_group = group
-
-    elif depression_feature == 'MH_PHQ_S':
-        if len(group) < target_count:
-            samples_needed = int((target_count - len(group)) / 2)
-            additional_samples = group.sample(samples_needed, replace=True)
-            balanced_group = pd.concat([group, additional_samples])
-
-        elif len(group) > 4*target_count:
-            balanced_group = group.sample(4*target_count, replace=False)
-        else:
-            balanced_group = group
-
-    return balanced_group
-
-def sampling_v2(group, target_count):
-    if len(group) < target_count:
-        samples_needed = target_count - len(group)
-        additional_samples = group.sample(samples_needed, replace=True)
-        balanced_group = pd.concat([group, additional_samples])
-
-    elif len(group) >= target_count:
-        balanced_group = group.sample(target_count, replace=False)
-
-    return balanced_group
 
 def sampling_small(group, target_count, depression_feature):
     if len(group) < target_count:
@@ -194,7 +156,6 @@ def compute_features(data):
     features = scaler.fit_transform(features.reshape(-1, 1)).flatten()
     return features
 
-
 def compute_metrics(TN, FP, FN, TP):
     accuracy = (TP + TN) / (TP + TN + FP + FN)
     precision = TP / (TP + FP)
@@ -202,7 +163,6 @@ def compute_metrics(TN, FP, FN, TP):
     f1 = 2 * (precision * recall) / (precision + recall)
     FNR = FN / (FN + TP)
     return accuracy, precision, recall, f1, FNR
-
 
 def create_roc(fpr, tpr, model_names):
     plt.figure(figsize=(8, 6))

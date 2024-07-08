@@ -54,17 +54,23 @@ class Synthetic_Patient_Dataset:
 
     def process_data(self):
         print('Processing Data')
+        # Create a function to rename columns to uppercase
         func = lambda df: df.rename(columns=str.upper)
+        # Apply the function to each dataframe
         self.pam14_df, self.pam16_df, self.all14_df, self.all16_df = map(func, [self.pam14_df, self.pam16_df, self.all14_df, self.all16_df])
+        # Concentrate the dataframes and remove the MOD_D column
         self.pam_combined = pd.concat([self.pam14_df, self.pam16_df], ignore_index=True)
         self.all_combined = pd.concat([self.all14_df, self.all16_df], ignore_index=True)
         self.pam_combined.drop('MOD_D', axis=1, inplace=True)
+        # Transform the ID column to string from bytestring
         self.pam_combined['ID'] = self.pam_combined['ID'].apply(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
         self.all_combined['ID'] = self.all_combined['ID'].apply(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
 
     def create_Synthetic_Dataset(self):
         print('Creating Synthetic Patients')
+        # Group the PAM data by ID
         self.pam_grouped = self.pam_combined.groupby('ID')
+        # Cut the dataset to the desired percentage
         cut = int(len(self.all_combined) * (self.percent / 100))
         self.all_combined = self.all_combined.iloc[1:cut]
         
@@ -80,18 +86,21 @@ class Synthetic_Patient_Dataset:
             # Get IDs in the group
             ids = group['ID'].tolist()
             valid_ids = []
+
             for id1 in ids:
+                # Get the valid IDs that are included in the PAM data
                 try:
-                    data_participant_1 = self.pam_grouped.get_group(id1)['PAXINTEN'].to_numpy()
+                    data_participant_1 = self.pam_grouped.get_group(id1)['PAXINTEN'].to_numpy() # this is for checking if it is a valid ID
                     valid_ids.append(id1)
                 except KeyError:
                     pass
-
+            # iterate over the valid_ids to create pairs
             for id_1 in valid_ids:
                 for id_2 in valid_ids:
                     if id_1 == id_2: #or (id_2,id_1) in id_pairs:
                         pass
                     else:
+                        # Get the IDs and add them to the list aswell as the group names
                         id_pairs.append((id_1,id_2))
                         group_names.append(name[0] + '_' + name[1] + '_' + name[2])
                         sex_names.append(name[0])
@@ -100,13 +109,14 @@ class Synthetic_Patient_Dataset:
 
                         # PHQ9P1 = all_combined.loc[all_combined['ID'] == id_1, 'BP_PHQ_9'].iloc[0]
                         # PHQ9P2 = all_combined.loc[all_combined['ID'] == id_2, 'BP_PHQ_9'].iloc[0]
-
+                        # Get the PHQ9 values for the IDs
                         PHQSP1 = self.all_combined.loc[self.all_combined['ID'] == id_1, self.depression_feature].iloc[0]
                         PHQSP2 = self.all_combined.loc[self.all_combined['ID'] == id_2, self.depression_feature].iloc[0]
-                        
+                        # Create the values based on the absolute difference
                         value = abs(int(PHQSP1 - PHQSP2))
                         PHQ_value = np.append(PHQ_value, value)
-            
+
+        # Create a dataframe from the created lists
         self.id_pairs_df = pd.DataFrame(id_pairs, columns=['ID_1', 'ID_2'])
         self.id_pairs_df['group_id'] = group_names
         self.id_pairs_df['SEX'] = sex_names
@@ -114,36 +124,41 @@ class Synthetic_Patient_Dataset:
         self.id_pairs_df['HE_BMI'] = bmi_names
         self.id_pairs_df['ID_COMBINED'] = self.id_pairs_df['ID_1'] + self.id_pairs_df['ID_2']
         self.id_pairs_df['d_PHQ'] = PHQ_value
+        # Here the values are transformed into binary values because the threshold is set to a specific value
         self.id_pairs_df['Depression'] = (self.id_pairs_df['d_PHQ'] >= self.threshold).astype(int)
 
     def calculate_actigraphy(self):
+
         print('Calculating Actigraphy Data from Synthetic Patients')
         pam_synthetic = pd.DataFrame(columns=['ID','ACTIGRAPHY_DATA'], dtype = object)
+        # Create an empty array with zeros to store the synthetic data
         synthetic_array = np.zeros((self.id_pairs_df.shape[0], 10080)) # 10080 number of samples for a single patient
         id_combined = []
         number = 0
+
         for index,synthetic_patient in self.id_pairs_df.iterrows():
-            
+            # Get the data for the participants 1 and 2
             data_participant_1 = self.pam_grouped.get_group(synthetic_patient['ID_1'])['PAXINTEN'].to_numpy()
             data_participant_2 = self.pam_grouped.get_group(synthetic_patient['ID_2'])['PAXINTEN'].to_numpy()
-
+            # Apply the operator to the data
             op_func = operator_map[self.operator]
             result = op_func(data_participant_1, data_participant_2)
-            
+            # Store the absolute value of the result divided by 2
             synthetic_array[number] = np.abs(result/2)
 
             id_combined.append(synthetic_patient['ID_1'] + synthetic_patient['ID_2'])
             logging.info(f"Participant_1 {synthetic_patient['ID_1']} and Participant_2 {synthetic_patient['ID_2']} added with {synthetic_array[number]}")
             number += 1
-            
+        # Create the Combined ID and ACTIGRAPHY_DATA columns
         pam_synthetic['ID'] = id_combined
         mask = []
+        # Delete the rows where the actigraphy data is zero at all datapoints
         for row in range(synthetic_array.shape[0]):
             max_value = np.max(synthetic_array[row, :])
             if max_value == 0 or max_value == 0.0:
                 mask.append(row)
         synthetic_array = np.delete(synthetic_array, mask, axis=0)
-
+        # Add the actigraphy data to the dataframe based on the rows
         for row in range(synthetic_array.shape[0]):
             pam_synthetic.at[row, 'ACTIGRAPHY_DATA'] = synthetic_array[row]
         self.id_pairs_df['ACTIGRAPHY_DATA'] = pam_synthetic['ACTIGRAPHY_DATA']
@@ -155,24 +170,15 @@ class Synthetic_Patient_Dataset:
         print(f'Saving Data into {path}')
         self.id_pairs_df.to_csv(path, index=False)
 
-    def dataset_oversample(self):
-        if self.depression_feature == 'BP_PHQ_9':
-            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/10) 
-            # Apply the oversampling function to each group
-            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling(x, mean_count, self.depression_feature)).reset_index(drop=True)
-        elif self.depression_feature == 'MH_PHQ_S':
-            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/2) 
-            # Apply the oversampling function to each group
-            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling(x, mean_count, self.depression_feature)).reset_index(drop=True)
-    
     def compute_features(self):
         feature_list = []
+        # Iterate over the participants and calculate the features with wavelet transformation
         for index,participant in self.id_pairs_df.iterrows():
             features = compute_features(participant['ACTIGRAPHY_DATA'])
             feature_list.append(features)
 
         feature_list = np.array(feature_list, dtype=np.float32)
-
+        # Add the features to the dataframe
         for i in range(feature_list.shape[1]):
             self.id_pairs_df[f'FEATURE_{i}'] = feature_list[:, i]
        
@@ -201,27 +207,7 @@ class Synthetic_Patient_Dataset:
             plt.savefig(f'data/Participant_Distribution_after_sampling_{self.depression_feature}_{sampler}.png')
         # Show the plot
         plt.show()
-        
-    def dataset_oversample_v2(self):
-        if self.depression_feature == 'BP_PHQ_9':
-            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/10) 
-            # Apply the oversampling function to each group
-            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_v2(x, mean_count)).reset_index(drop=True)
-        elif self.depression_feature == 'MH_PHQ_S':
-            mean_count = int(self.id_pairs_df.groupby('d_PHQ').size().mean()/2) 
-            # Apply the oversampling function to each group
-            self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_v2(x, mean_count)).reset_index(drop=True)
 
-        return True
-    
-    def dataset_oversample_v3(self):
-        number_groups = len(self.id_pairs_df.groupby('d_PHQ').size())
-        number_without_0 = self.id_pairs_df.groupby('d_PHQ').size()
-        number_without_0 = number_without_0[number_without_0.index != 0].sum()
-        self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda group: sampling_v3(group, number_groups, number_without_0)).reset_index(drop=True)
-
-        return True
-        
     def dataset_sample(self):
         # Apply the oversampling function to each group
         if self.depression_feature == 'BP_PHQ_9':
@@ -229,34 +215,3 @@ class Synthetic_Patient_Dataset:
         else:
             self.id_pairs_df = self.id_pairs_df.groupby('d_PHQ').apply(lambda x: sampling_small(x, 40, self.depression_feature)).reset_index(drop=True)
 
-
-# sample_method = False
-# sampler = 3
-
-# Dataset = Synthetic_Patient_Dataset(threshold = 10, actigraphy_data_operator = '-', depression_classifier_feature = 'MH_PHQ_S', percent_of_dataset = 100)
-# Dataset.load_data(path_all='ALL/', path_pam='PAM/')
-# Dataset.remove_features()
-# Dataset.create_intervalls()
-# Dataset.process_data()
-# Dataset.create_Synthetic_Dataset()
-# Dataset.calculate_actigraphy()
-# Dataset.compute_features()
-# Dataset.remove_actigraphy()
-# Dataset.dataset_sample()
-
-# if sampler == 1:
-#     Dataset.particicipant_distribution()
-#     Dataset.dataset_oversample()
-#     Dataset.particicipant_distribution(before_sampling=False)
-# elif sampler == 2:
-#     Dataset.particicipant_distribution(sampler=2)
-#     sample_method = Dataset.dataset_oversample_v2()
-#     Dataset.particicipant_distribution(before_sampling=False, sampler=2)
-# elif sampler == 3:
-#     Dataset.particicipant_distribution(sampler=3)
-#     sample_method = Dataset.dataset_oversample_v3()
-#     Dataset.particicipant_distribution(before_sampling=False, sampler=3)
-
-# print_information(Dataset.id_pairs_df)
-
-# Dataset.save_data(f'data/Threshold_{Dataset.threshold}_Operator_{Dataset.operator}_Depressionfeature_{Dataset.depression_feature}_PercentofDataset_{Dataset.percent}.csv')
