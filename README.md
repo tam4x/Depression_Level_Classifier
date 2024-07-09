@@ -3,7 +3,8 @@
 ## Project Structure
 
 - All problems are solved inside their respective folder
-- The first problem is split between the EDA and the preprocessing-analysis in the .py files feature_extraction.py Data_Preprocessing_and_features.py helpers.py Data_processing.ipynb and the model training in the folders named after each member of our group. Inside these folders there are the machines, as well as folders with some (visual) results. 
+- The first problem is split between the EDA and the preprocessing-analysis in the .py files feature_extraction.py Data_Preprocessing_and_features.py helpers.py Data_processing.ipynb.
+- The model training can be found in the folders named after each member of our group. Inside these folders there are the machines, as well as folders with some (visual) results or tables. 
 
         - Pier (Threshold 15 and 3)
             - FNN
