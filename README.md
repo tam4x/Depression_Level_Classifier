@@ -28,12 +28,11 @@
             - Lasso
             - Ridge
             - Logistic Regression
-
-    - Data_processing (Creation of the datasets)
-    - helpers (Some helpers Functions)
-    - Data_Preprocessing_and_features (File to create the processed Dataframe with parameters)
-        - Threshold (For MH_PHQ_S = [13,15,17,19,21] and for BP_PHQ_9 = [1,2,3,6,8])
-        - actigraphy_data_operator (+, -)
-        - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
-        - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^
-    - EDA (for visual data exploration and analysis)
+        - Data_processing (Creation of the datasets)
+        - helpers (Some helpers Functions)
+        - Data_Preprocessing_and_features (File to create the processed Dataframe with parameters)
+            - Threshold (For MH_PHQ_S = [13,15,17,19,21] and for BP_PHQ_9 = [1,2,3,6,8])
+            - actigraphy_data_operator (+, -)
+            - depression_classifier_feature (MH_PHQ_S, BP_PHQ_9)
+            - percent_of_dataset (10,20,30,..,100) -> for slow PC ^^
+        - EDA (for visual data exploration and analysis)
