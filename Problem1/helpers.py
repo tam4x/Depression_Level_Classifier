@@ -1,0 +1,187 @@
+import numpy as np
+import pandas as pd
+import random
+import pywt
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
+# Define functions to compute statistical features
+
+def process_data(data: pd.DataFrame) -> pd.DataFrame:
+    # Drop rows with missing target values
+    # For numerical columns, fill missing values with the mean
+    for column in data.columns:
+        if column == 'sex':
+            # Count the number of NaN values
+            nan_count = data[column].isna().sum()
+
+            # Create a list of random values (1 or 2) with the same length as the number of NaN values
+            random_values = [random.choice([1, 2]) for _ in range(nan_count)]
+
+            # Create an iterator from the random values list
+            random_values_iter = iter(random_values)
+
+            # Replace NaN values with the random values
+            data[column] = data[column].apply(lambda x: next(random_values_iter) if pd.isna(x) else x)
+
+        elif column == 'year':
+            data[column] = data[column].fillna(int(data[column].mean()))
+
+        elif column in ['id','mod_d', 'ID']:
+            pass
+
+        elif column in ["BP_PHQ_1", "BP_PHQ_2", "BP_PHQ_3", "BP_PHQ_4", "BP_PHQ_5", "BP_PHQ_6", "BP_PHQ_7", "BP_PHQ_8", "BP_PHQ_9", "MH_PHQ_S"]:
+            data[column] = data[column].fillna(int(data[column].mean()))
+
+        else:
+            data[column] = data[column].fillna(data[column].mean())
+
+    return data
+
+def Depression_Severity_(value): #for BP_PHQ_9
+    if 0 <= value <= 4:
+        return "None_disorder"
+    elif value >= 5:
+        return "Disorder"
+    elif np.isnan(value):
+        return "None_disorder"
+
+def Depression_Severity(value):#for mh_PHQ_S
+    if 0 <= value <= 4:
+        return "None-minimal"
+    elif 5 <= value < 10:
+        return "Mild"
+    elif 10 <= value < 15:
+        return "Moderate"
+    elif 15 <= value < 20:
+        return "Moderately Severe"
+    elif 20 <= value <= 27:
+        return "Severe"
+    elif np.isnan(value):
+        return "None-minimal"
+
+def BMI_range(value):
+    if value < 18.5:
+        return "underweight"
+    elif 18.5 <= value < 25:
+        return "Healthy Weight"
+    elif 25 <= value < 30:
+        return "overweight"
+    elif value >= 30:
+        return "obese"
+    elif np.isnan(value):
+        return "Healthy Weight"
+
+def Sex_name(value):
+    if value == 1:
+        return "Male"
+    elif value == 2:
+        return "Female"
+    elif np.isnan(value):
+        return "Male"
+
+def Age_range(value):
+    if 19 <= value < 24:
+        return "[19-23]"
+    elif 24 <= value < 29:
+        return "[24-28]"
+    elif 29 <= value < 34:
+        return "[29-33]"
+    elif 34 <= value < 39:
+        return "[34-38]"
+    elif 39 <= value < 44:
+        return "[39-43]"
+    elif 44 <= value < 49:
+        return "[44-48]"
+    elif 49 <= value < 54:
+        return "[49-53]"
+    elif 54 <= value < 59:
+        return "[54-58]"
+    elif 59 <= value <= 65:
+        return "[59-65]"
+    elif np.isnan(value) == None:
+        return "[34-38]"
+    elif value > 65:
+        return "[59-65]"
+    elif value < 19:
+        return "[19-23]"
+
+def print_information(df):
+    df_grouped = df.groupby('d_PHQ')
+    for name, group in df_grouped:
+        print(name)
+        print(group.count())
+    print('---Number of Non-Depression and Depression---')
+    print(df.groupby('Depression').count()['ID_1'].iloc[0], df.groupby('Depression').count()['ID_1'].iloc[1])
+
+def sampling_small(group, target_count, depression_feature):
+    if len(group) < target_count:
+        samples_needed = target_count - len(group)
+        additional_samples = group.sample(samples_needed, replace=True)
+        balanced_group = pd.concat([group, additional_samples])
+
+    elif len(group) > target_count:
+        balanced_group = group.sample(target_count, replace=False)
+    else:
+        balanced_group = group
+
+    return balanced_group
+
+def compute_energy(coeff):
+    return np.sum(coeff ** 2)
+
+def compute_mean(coeff):
+    return np.mean(coeff)
+
+def compute_std(coeff):
+    return np.std(coeff)
+
+def compute_entropy(coeff):
+    p = np.abs(coeff) / np.sum(np.abs(coeff))
+    return -np.sum(p * np.log2(p + np.finfo(float).eps))  # eps to avoid log(0)
+
+def compute_features(data):
+    coeffs = pywt.wavedec(data, 'db1')
+    features = []
+    for i, coeff in enumerate(coeffs):
+        features.append(compute_energy(coeff))
+        features.append(compute_mean(coeff))
+        features.append(compute_std(coeff))
+        features.append(compute_entropy(coeff))
+
+    features = np.array(features)
+
+    scaler = StandardScaler()
+    features = scaler.fit_transform(features.reshape(-1, 1)).flatten()
+    return features
+
+def compute_metrics(TN, FP, FN, TP):
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1 = 2 * (precision * recall) / (precision + recall)
+    FNR = FN / (FN + TP)
+    return accuracy, precision, recall, f1, FNR
+
+def create_roc(fpr, tpr, model_names):
+    plt.figure(figsize=(8, 6))
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')  # Diagonal line
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate (FPR)')
+    plt.ylabel('True Positive Rate (TPR)')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    plt.grid(True)
+    colors = ['red', 'green', 'purple', 'orange', 'black', 'pink', 'brown', 'gray']
+
+    for i,model in enumerate(model_names):
+        plt.plot(fpr[i], tpr[i], color = colors[i], label=model)
+    # Plot ROC curve
+    plt.legend(loc="lower right")
+    plt.grid(True)
+    plt.savefig(f'ROC/ROC_All_Models.png')
+
+
+

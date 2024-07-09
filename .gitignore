@@ -1,7 +1,7 @@
-/ALL
-/data
-/HWP
-/PAM
+Problem1/ALL
+Problem1/data
+Problem1/HWP
+Problem1/PAM
 /__pycache__
 /.ipynp_checkpoints
 .log
