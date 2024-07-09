@@ -5,7 +5,7 @@
 - All problems are solved inside their respective folder
 - The first problem is split between the EDA and the preprocessing-analysis in the .py files feature_extraction.py Data_Preprocessing_and_features.py helpers.py Data_processing.ipynb and the model training in the folders named after each member of our group. Inside these folders there are the machines, as well as folders with some (visual) results. 
 
-    - Pier (Threshold 15 and 3)
+        - Pier (Threshold 15 and 3)
             - FNN
             - Adaboost
             - Evaluation (Evaluation and creation of the Confusion Matrices and ROC Curve)
